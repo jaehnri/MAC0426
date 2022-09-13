@@ -1,7 +1,9 @@
 /* 
 MAC0426 - Sistemas de Bancos de Dados - Exercício 1
-João Henri Carrenho Rocha
-11796378
+Nome: João Henri Carrenho Rocha
+NUSP: 11796378
+
+Obs: as consultas foram testadas na versão 14.1 do PostgreSQL.
 */
 
 
@@ -90,7 +92,6 @@ HAVING count(*) >= 2;
 
 -- j) Obtenha o número de produtos que são fornecidos ou por um agricultor de São Paulo ou para
 -- um restaurante em São Paulo.
-
 SELECT COUNT(DISTINCT(e.codp))
 FROM entrega e
 INNER JOIN agricultor a ON a.coda = e.coda
@@ -100,3 +101,49 @@ WHERE a.cidadea = 'São Paulo'
 
 -- k) Obtenha pares do tipo (código do restaurante, código do produto) tais que o restaurante
 -- indicado nunca tenha recebido o produto indicado.
+WITH produtos_recebidos_por_restaurante AS
+  (SELECT DISTINCT e.codp,
+                   e.codr
+   FROM entrega e
+   INNER JOIN restaurante r ON r.codr = e.codr)
+SELECT DISTINCT r.nomer,
+                p.nomep
+FROM entrega e
+INNER JOIN restaurante r ON r.codr = e.codr
+CROSS JOIN produto p
+WHERE (p.codp,
+       e.codr) not in
+    (SELECT prpr.codp,
+            prpr.codr
+     FROM produtos_recebidos_por_restaurante prpr)
+ORDER BY r.nomer,
+         p.nomep;
+
+-- l) Obtenha o(s) nome(s) dos produtos mais fornecidos a restaurantes (ou seja, os produtos dos
+-- quais as somas das quantidades já entregues é a maior possível). 
+SELECT p.nomep,
+       sum(qtdequilos) AS qtd_total_entregue
+FROM entrega e
+INNER JOIN produto p ON p.codp = e.codp
+GROUP BY p.codp
+ORDER BY qtd_total_entregue DESC;
+
+-- m) Obtenha o nome do(s) restaurante(es) que recebeu(receberam) a entrega de produtos mais
+-- recente registrada no BD.
+SELECT r.nomer
+FROM entrega e
+INNER JOIN restaurante r ON r.codr = e.codr WHERE e.dataentrega in
+  (SELECT max(dataentrega)
+   FROM entrega);
+
+-- n) Liste todos os pares possíveis do tipo (i,j) tal que i é o nome de um produto, j é o nome de um
+-- agricultor que já entregou i. Mas atenção: o nome de todos os produtos cadastrados no BD deve
+-- aparecer no conjunto resposta. Se um produto nunca foi entregue, então o seu nome deve vir
+-- acompanhado de NULL no conjunto resposta. A resposta deve aparecer em ordem decrescente
+-- de nome de produto. 
+SELECT DISTINCT p.nomep,
+                a.nomea
+FROM entrega e
+INNER JOIN agricultor a ON a.coda = e.coda
+RIGHT JOIN produto p ON p.codp = e.codp
+ORDER BY p.nomep;
