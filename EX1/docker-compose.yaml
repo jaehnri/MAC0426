@@ -1,0 +1,12 @@
+version: '3.3'
+services:
+  db:
+    network_mode: bridge
+    image: postgres:14.1-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./script_criacao_bd_exercicio1.sql:/docker-entrypoint-initdb.d/create_tables.sql
