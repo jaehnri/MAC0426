@@ -121,12 +121,18 @@ ORDER BY r.nomer,
 
 -- l) Obtenha o(s) nome(s) dos produtos mais fornecidos a restaurantes (ou seja, os produtos dos
 -- quais as somas das quantidades já entregues é a maior possível). 
-SELECT p.nomep,
-       sum(qtdequilos) AS qtd_total_entregue
-FROM entrega e
-INNER JOIN produto p ON p.codp = e.codp
-GROUP BY p.codp
-ORDER BY qtd_total_entregue DESC;
+WITH qtd_total_entregue_produto AS (
+    SELECT p.nomep,
+        sum(qtdequilos) AS qtd_total_entregue
+    FROM entrega e
+    INNER JOIN produto p ON p.codp = e.codp
+    GROUP BY p.codp
+)
+SELECT q.nomep, q.qtd_total_entregue 
+  FROM qtd_total_entregue_produto q
+ WHERE q.qtd_total_entregue IN (
+    SELECT max(qtd_total_entregue) FROM qtd_total_entregue_produto
+);
 
 -- m) Obtenha o nome do(s) restaurante(es) que recebeu(receberam) a entrega de produtos mais
 -- recente registrada no BD.
